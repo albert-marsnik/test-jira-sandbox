@@ -1,6 +1,6 @@
 {
-  "project_key": "PROJ",
+  "project": { "id": "10000" },
   "summary": "Issue summary",
   "description": "Detailed description of the issue",
-  "issue_type": "Task"
+  "issuetype": { "id": "10001" }
 }
