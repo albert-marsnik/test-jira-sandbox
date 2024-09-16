@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "test_jira_sandbox": {
+      "commandName": "Project",
+      "commandLineArgs": "--port 7235",
+      "launchBrowser": false
+    }
+  }
+}
