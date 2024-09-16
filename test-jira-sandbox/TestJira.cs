@@ -88,7 +88,7 @@ namespace Sandbox
                 var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
 
                 // Make the request to Jira API
-                HttpResponseMessage response = null;
+                HttpResponseMessage? response = null;
                 try
                 {
                     response = await client.PostAsync(jiraApiUrl, content);
