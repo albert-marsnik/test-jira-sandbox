@@ -102,13 +102,15 @@ namespace Sandbox
                     {
                         var errorContent = await response.Content.ReadAsStringAsync();
                         _logger.LogError($"Jira API response: {errorContent}");
+
+                        return new BadRequestObjectResult(errorContent);
                     }
                     return new StatusCodeResult(StatusCodes.Status500InternalServerError);
                 }
             }
             else
             {
-                return new BadRequestObjectResult($"Failed to create Jira ticket, json data is bad");
+                return new BadRequestObjectResult($"Failed to create Jira ticket, problem with reading data.json");
             }
         }
     }
