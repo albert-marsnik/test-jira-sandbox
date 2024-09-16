@@ -16,13 +16,10 @@ namespace Sandbox
             _logger = logger;
         }
 
-        private static readonly string JIRA_URL = "https://ti8m-marsnik.atlassian.net";
-        private static readonly string JIRA_USER = "albert.marsnik@ti8m.ch";
-        private static readonly string JIRA_API_TOKEN = "ATATT3xFfGF0lC9g7wn7mdlJxFGatnHt4v5KgROR9r372CxYNgkCzLKb2gYvrhzwTq9N-jo_VBiHlB_PBoKLi_mPI3xoG9FA_MFQxubCJRKlXMJ-06b-wdVQfZ_LT9L3LtUEVq60lvi_SdtcZIumnD0a2PE7Z2aqjPhSnW1-u-xP3zGA70DtLUU=B3ACBDBB";
-        private static readonly string JIRA_ORGANIZATION_ID = "33c618a7-3j7j-178a-6609-39619k487bk9";
+        private static readonly string? JIRA_URL = Environment.GetEnvironmentVariable("JIRA_URL");
+        private static readonly string? JIRA_USER = Environment.GetEnvironmentVariable("JIRA_USER");
+        private static readonly string? JIRA_API_TOKEN = Environment.GetEnvironmentVariable("JIRA_API_TOKEN");
 
-        // To test: curl -X GET http://localhost:7235/api/TestJira
-        // To test: curl -X GET https://test-jira-sandbox.azurewebsites.net/api/TestJira
         [Function(nameof(TestJira))]
         public async Task<IActionResult> Run(
             [HttpTrigger(AuthorizationLevel.Anonymous, "get", "post")] HttpRequest? req = null)
