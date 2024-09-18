@@ -4,8 +4,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Microsoft.Azure.Functions.Worker;
+using test_jira_sandbox.Models;
 
-namespace Sandbox
+namespace test_jira_sandbox
 {
     public class TestJira
     {
@@ -26,7 +27,6 @@ namespace Sandbox
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
-            // Read the JSON file
             string jsonFilePath = Path.Combine(Directory.GetCurrentDirectory(), "data.json");
             string jsonData;
 
@@ -40,55 +40,25 @@ namespace Sandbox
                 return new StatusCodeResult(StatusCodes.Status500InternalServerError);
             }
 
-            dynamic data = JsonConvert.DeserializeObject(jsonData) ?? new { project_key = "", summary = "", description = "", issue_type = "", };
-
-            if (data.project.id != "" || data.summary != "" || data.description != "" || data.issuetype.id != "")
+            var jsonSerializerSettings = new JsonSerializerSettings
             {
-                // Prepare the Jira API request
+                Converters = { new JiraAdfDescriptionConverter() },
+                NullValueHandling = NullValueHandling.Ignore,
+                ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+            };
+
+            var jiraPayload = new JiraPayload(jsonData, jsonSerializerSettings);
+
+            if (jiraPayload.IsValidJiraPayload())
+            {
                 string jiraApiUrl = $"{JIRA_URL}/rest/api/3/issue";
                 var client = new HttpClient();
                 var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{JIRA_USER}:{JIRA_API_TOKEN}"));
-
                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authToken);
-
-                // Create ADF for the description
-                var adfDescription = new
-                {
-                    version = 1,
-                    type = "doc",
-                    content = new[]
-                    {
-                        new
-                        {
-                            type = "paragraph",
-                            content = new[]
-                            {
-                                new
-                                {
-                                    type = "text",
-                                    text = (string)data.description
-                                }
-                            }
-                        }
-                    }
-                };
-
-                // Customize the payload based on your JSON data
-                var payload = new
-                {
-                    fields = new
-                    {
-                        project = new { id = (string)data.project.id },
-                        summary = (string)data.summary,
-                        description = adfDescription,
-                        issuetype = new { id = (string)data.issuetype.id }
-                    }
-                };
-
-                var content = new StringContent(JsonConvert.SerializeObject(payload), Encoding.UTF8, "application/json");
-
-                // Make the request to Jira API
+                var serializedJiraPayload = JsonConvert.SerializeObject(jiraPayload, jsonSerializerSettings);
+                var content = new StringContent(serializedJiraPayload, Encoding.UTF8, "application/json");
                 HttpResponseMessage? response = null;
+
                 try
                 {
                     response = await client.PostAsync(jiraApiUrl, content);
@@ -110,7 +80,7 @@ namespace Sandbox
             }
             else
             {
-                return new BadRequestObjectResult($"Failed to create Jira ticket, problem with reading data.json");
+                return new BadRequestObjectResult($"Failed to create Jira ticket, {jiraPayload.ReasonForInvalidJiraPayload()}");
             }
         }
     }
