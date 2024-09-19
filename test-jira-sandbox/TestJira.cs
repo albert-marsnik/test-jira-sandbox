@@ -5,16 +5,19 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Microsoft.Azure.Functions.Worker;
 using test_jira_sandbox.Models;
+using test_jira_sandbox.Services;
 
 namespace test_jira_sandbox
 {
     public class TestJira
     {
         private readonly ILogger<TestJira> _logger;
+        private readonly IJsonDataService _jsonDataService;
 
-        public TestJira(ILogger<TestJira> logger)
+        public TestJira(ILogger<TestJira> logger, IJsonDataService jsonDataService)
         {
             _logger = logger;
+            _jsonDataService = jsonDataService;
         }
 
         private static readonly string? JIRA_URL = Environment.GetEnvironmentVariable("JIRA_URL");
@@ -27,17 +30,16 @@ namespace test_jira_sandbox
         {
             _logger.LogInformation("C# HTTP trigger function processed a request.");
 
-            string jsonFilePath = Path.Combine(Directory.GetCurrentDirectory(), "data.json");
             string jsonData;
 
             try
             {
-                jsonData = await File.ReadAllTextAsync(jsonFilePath);
+                jsonData = _jsonDataService.GetJsonData();
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error reading JSON file: {ex.Message}");
-                return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+                _logger.LogError($"Error retrieving JSON data: {ex.Message}");
+                return new UnprocessableEntityObjectResult(ex);
             }
 
             var jsonSerializerSettings = new JsonSerializerSettings
@@ -75,6 +77,7 @@ namespace test_jira_sandbox
 
                         return new BadRequestObjectResult(errorContent);
                     }
+
                     return new UnprocessableEntityObjectResult(ex);
                 }
             }

@@ -17,9 +17,6 @@
     <PackageReference Include="Microsoft.Azure.WebJobs.Core" Version="3.0.41" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="data.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="host.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

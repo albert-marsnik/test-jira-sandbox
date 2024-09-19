@@ -1,6 +1,0 @@
-{
-  "project": { "id": "10000" },
-  "summary": "Issue summary",
-  "description": "Detailed description of the issue",
-  "issuetype": { "id": "10001" }
-}
