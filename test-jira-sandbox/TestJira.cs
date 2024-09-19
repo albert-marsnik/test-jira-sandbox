@@ -75,7 +75,7 @@ namespace test_jira_sandbox
 
                         return new BadRequestObjectResult(errorContent);
                     }
-                    return new StatusCodeResult(StatusCodes.Status500InternalServerError);
+                    return new UnprocessableEntityObjectResult(ex);
                 }
             }
             else
