@@ -1,4 +1,3 @@
-using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -13,11 +12,13 @@ namespace test_jira_sandbox
     {
         private readonly ILogger<TestJira> _logger;
         private readonly IJsonDataService _jsonDataService;
+        private readonly IJiraService _jiraService;
 
-        public TestJira(ILogger<TestJira> logger, IJsonDataService jsonDataService)
+        public TestJira(ILogger<TestJira> logger, IJsonDataService jsonDataService, IJiraService jiraService)
         {
             _logger = logger;
             _jsonDataService = jsonDataService;
+            _jiraService = jiraService;
         }
 
         private static readonly string? JIRA_URL = Environment.GetEnvironmentVariable("JIRA_URL");
@@ -53,31 +54,15 @@ namespace test_jira_sandbox
 
             if (jiraPayload.IsValidJiraPayload())
             {
-                string jiraApiUrl = $"{JIRA_URL}/rest/api/3/issue";
-                var client = new HttpClient();
-                var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{JIRA_USER}:{JIRA_API_TOKEN}"));
-                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authToken);
-                var serializedJiraPayload = JsonConvert.SerializeObject(jiraPayload, jsonSerializerSettings);
-                var content = new StringContent(serializedJiraPayload, Encoding.UTF8, "application/json");
-                HttpResponseMessage? response = null;
-
                 try
                 {
-                    response = await client.PostAsync(jiraApiUrl, content);
-                    response.EnsureSuccessStatusCode();
-                    return new OkObjectResult($"Jira ticket created successfully: {await response.Content.ReadAsStringAsync()}");
+                    await _jiraService.EnsureCustomFieldsExist(jiraPayload.Fields?.CustomFields);
+                    var result = await _jiraService.CreateJiraTicket(jiraPayload, jsonSerializerSettings);
+                    return new OkObjectResult(result);
                 }
-                catch (HttpRequestException ex)
+                catch (Exception ex)
                 {
-                    _logger.LogError($"Error creating Jira ticket: {ex.Message}");
-                    if (response != null)
-                    {
-                        var errorContent = await response.Content.ReadAsStringAsync();
-                        _logger.LogError($"Jira API response: {errorContent}");
-
-                        return new BadRequestObjectResult(errorContent);
-                    }
-
+                    _logger.LogError($"Error processing Jira request: {ex.Message}");
                     return new UnprocessableEntityObjectResult(ex);
                 }
             }

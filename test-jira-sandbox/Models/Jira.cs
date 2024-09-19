@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace test_jira_sandbox.Models
 {
@@ -85,7 +86,6 @@ namespace test_jira_sandbox.Models
         }
     }
 
-
     public class JiraContentType
     {
         public const string Paragraph = "paragraph";
@@ -97,6 +97,17 @@ namespace test_jira_sandbox.Models
         }
     }
 
+    public class JiraField
+    {
+        [JsonProperty("id")]
+        public string? Id;
+
+        [JsonProperty("name")]
+        public string? Name;
+
+        [JsonProperty("type")]
+        public string? Type;
+    }
 
     public class JiraId
     {
@@ -104,10 +115,15 @@ namespace test_jira_sandbox.Models
         public string? Id;
     }
 
-    public class JiraPayload(string? jsonData, JsonSerializerSettings? jsonSerializerSettings)
+    public class JiraPayload
     {
         [JsonProperty("fields")]
-        public JiraPayloadFields? Fields = JsonConvert.DeserializeObject<JiraPayloadFields>(jsonData, jsonSerializerSettings);
+        public JiraPayloadFields? Fields;
+
+        public JiraPayload(string? jsonData, JsonSerializerSettings? jsonSerializerSettings)
+        {
+            Fields = JsonConvert.DeserializeObject<JiraPayloadFields>(jsonData, jsonSerializerSettings);
+        }
 
         public bool IsValidJiraPayload()
         {
@@ -145,18 +161,75 @@ namespace test_jira_sandbox.Models
 
             return $"the {nameof(ReasonForInvalidJiraPayload)} method has likely not been updated to include all required fields";
         }
+
+        public string SerializeWithoutStatus(JsonSerializerSettings jsonSerializerSettings)
+        {
+            var fieldsCopy = new JObject(JObject.FromObject(Fields, JsonSerializer.Create(jsonSerializerSettings)));
+            fieldsCopy.Remove("status");
+            var payloadCopy = new JObject
+            {
+                ["fields"] = fieldsCopy
+            };
+            return payloadCopy.ToString();
+        }
     }
 
     public class JiraPayloadFields
     {
+        [JsonProperty("assignee")]
+        public JiraId? Assignee;
+
+        [JsonExtensionData]
+        public IDictionary<string, JToken>? CustomFields;
+
         [JsonProperty("description")]
         public JiraAdfDescription? Description;
-
+        /*
+        TODO: Validation on this property
+       {
+           "id": "10001",
+           "name": "Task"
+       },
+       {
+           "id": "10002",
+           "name": "Bug"
+       },
+       {
+           "id": "10003",
+           "name": "Story"
+       },
+       {
+           "id": "10004",
+           "name": "Epic"
+       },
+       {
+           "id": "10005",
+           "name": "Subtask"
+       }
+       */
         [JsonProperty("issuetype")]
         public JiraId? IssueType;
 
         [JsonProperty("project")]
         public JiraId? Project;
+
+        /*
+         TODO: Validation on this property
+        {
+            "id": "11",
+            "name": "To Do"
+        },
+        {
+            "id": "21",
+            "name": "In Progress"
+        },
+        {
+            "id": "31",
+            "name": "Done"
+        }
+         */
+        [JsonProperty("status")]
+        public JiraId? Status;
 
         [JsonProperty("summary")]
         public string? Summary;

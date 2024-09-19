@@ -9,6 +9,7 @@ var host = new HostBuilder()
     {
         services.AddApplicationInsightsTelemetryWorkerService();
         services.AddSingleton<IJsonDataService, JsonDataService>();
+        services.AddHttpClient<IJiraService, JiraService>();
         services.ConfigureFunctionsApplicationInsights();
     })
     .Build();
