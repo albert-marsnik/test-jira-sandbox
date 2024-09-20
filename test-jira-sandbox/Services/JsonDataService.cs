@@ -14,8 +14,11 @@ namespace test_jira_sandbox.Services
                 issuetype = new { id = "10001" },
                 assignee = new { id = "712020:1ae9fed4-a563-46d6-8119-7dc26e704c6c" },
                 status = new { id = "10003" },
-                customField1 = "Custom value 1",
-                customField2 = "Custom value 2"
+                labels = new List<string>() { "label-1", "label-2", "label-3" },
+                customfield_10037 = "Custom value 1",
+                customfield_10038 = "Custom value 2",
+                duedate = "2029-01-01",
+                //fixVersions = "2025.1.0"
             };
 
             return JsonConvert.SerializeObject(jsonData);

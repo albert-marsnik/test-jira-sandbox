@@ -5,6 +5,7 @@ using Newtonsoft.Json;
 using Microsoft.Azure.Functions.Worker;
 using test_jira_sandbox.Models;
 using test_jira_sandbox.Services;
+using Azure;
 
 namespace test_jira_sandbox
 {
@@ -21,9 +22,9 @@ namespace test_jira_sandbox
             _jiraService = jiraService;
         }
 
+        private static readonly string? JIRA_API_TOKEN = Environment.GetEnvironmentVariable("JIRA_API_TOKEN");
         private static readonly string? JIRA_URL = Environment.GetEnvironmentVariable("JIRA_URL");
         private static readonly string? JIRA_USER = Environment.GetEnvironmentVariable("JIRA_USER");
-        private static readonly string? JIRA_API_TOKEN = Environment.GetEnvironmentVariable("JIRA_API_TOKEN");
 
         [Function(nameof(TestJira))]
         public async Task<IActionResult> Run(
@@ -40,7 +41,10 @@ namespace test_jira_sandbox
             catch (Exception ex)
             {
                 _logger.LogError($"Error retrieving JSON data: {ex.Message}");
-                return new UnprocessableEntityObjectResult(ex);
+                return new ObjectResult(new { error = ex.Message })
+                {
+                    StatusCode = StatusCodes.Status500InternalServerError
+                };
             }
 
             var jsonSerializerSettings = new JsonSerializerSettings
@@ -63,12 +67,15 @@ namespace test_jira_sandbox
                 catch (Exception ex)
                 {
                     _logger.LogError($"Error processing Jira request: {ex.Message}");
-                    return new UnprocessableEntityObjectResult(ex);
+                    return new ObjectResult(new { error = ex.Message })
+                    {
+                        StatusCode = StatusCodes.Status422UnprocessableEntity
+                    };
                 }
             }
             else
             {
-                return new BadRequestObjectResult($"Failed to create Jira ticket, {jiraPayload.ReasonForInvalidJiraPayload()}");
+                return new BadRequestObjectResult(new { error = jiraPayload.ReasonForInvalidJiraPayload() });
             }
         }
     }

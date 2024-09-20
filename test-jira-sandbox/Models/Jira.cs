@@ -99,6 +99,9 @@ namespace test_jira_sandbox.Models
 
     public class JiraField
     {
+        [JsonProperty("key")]
+        public string? Key;
+
         [JsonProperty("id")]
         public string? Id;
 
